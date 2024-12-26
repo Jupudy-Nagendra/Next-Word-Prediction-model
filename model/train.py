@@ -1,35 +1,38 @@
-import numpy as np
 import pandas as pd
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.svm import SVC
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+import joblib
+import os  # Ensure os is imported
 
-# Load the dataset
+def train_model(data_path: str, model_path: str):
+    # Load dataset
+    data = pd.read_csv(data_path)
+    X, y = data['Context'], data['NextWord']
+    
+    # Split into train and test sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Create pipeline
+    pipeline = Pipeline([
+        ('vectorizer', CountVectorizer(ngram_range=(1, 2))),
+        ('svm', SVC(kernel='linear', probability=True))
+    ])
+    
+    # Train model
+    pipeline.fit(X_train, y_train)
+    # Test model
+    y_pred = pipeline.predict(X_test)
+    print(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
+    
+    # Ensure the directory for the model_path exists
+    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+    
+    # Save model
+    joblib.dump(pipeline, model_path)
+    print(f"Model saved at {model_path}")
 
-df = pd.read_csv(r"Next-Word-Prediction-model\model\sentences.csv")
-
-
-# Initialize the tokenizer
-tokenizer = Tokenizer()
-tokenizer.fit_on_texts(df['text'])
-
-# Create sequences
-sequences = []
-for line in df['text']:
-    token_list = tokenizer.texts_to_sequences([line])[0]
-    for i in range(1, len(token_list)):
-        n_gram_sequence = token_list[:i + 1]
-        sequences.append(n_gram_sequence)
-
-# Pad the sequences
-max_sequence_length = max(len(x) for x in sequences)
-sequences = pad_sequences(sequences, maxlen=max_sequence_length, padding='pre')
-
-# Create predictors and label
-X, y = sequences[:, :-1], sequences[:, -1]
-y = np.array([0 if i not in tokenizer.word_index else tokenizer.word_index[i] for i in y])
-
-# Convert labels to categorical
-from tensorflow.keras.utils import to_categorical
-y = to_categorical(y, num_classes=len(tokenizer.word_index) + 1)
-
-print(X.shape, y.shape)
+if __name__ == "__main__":
+    train_model(r'data\next_word_dataset.csv', r"model\next_word_svm.pkl")

@@ -1,0 +1,18 @@
+Context,NextWord
+I,love
+I love,machine
+I love machine,learning
+I,enjoy
+I enjoy,programming
+This,is
+This is,a
+This is a,great
+This is a great,tutorial
+FastAPI,makes
+FastAPI makes,API
+FastAPI makes API,development
+FastAPI makes API development,easier
+Python,is
+Python is,a
+Python is a,versatile
+Python is a versatile,language
